@@ -1,5 +1,6 @@
 import machine
 import time
+import struct
 
 SoftReset = 0x00 # Software Reset
 SysStatus = 0x01 # System Status
@@ -72,10 +73,7 @@ cs - chip select when multiplexing
 def comm_atm90(RW,address,val,cs):
 	#switch MSB and LSB of value
 	buf = bytearray(2)
-	#use struct ?
-	buf[0] = val>>8
-	buf[1] = val<<8
-	
+	otw_val = struct.pack('>H',val)
 	#Set read write flag
 	address|=RW<<7
 	cs.value(False)
@@ -89,9 +87,8 @@ def comm_atm90(RW,address,val,cs):
 	if(RW):
 		buf = spi.read(2)
 	else:
-		spi.write(buf)			 # write all the bytes
+		spi.write(otw_val)			 # write all the bytes
 	cs.value(1)
-	#FIXME: Flip bytes
 	return int.from_bytes(buf,'big')
 	
 def GetSysStatus(cs):
@@ -116,7 +113,7 @@ def init_atm90(cs):
 	comm_atm90(False,CSOne,0x4A34,cs) #Write CSOne, as self calculated
 	
 	print("Checksum 1:")
-	print(comm_atm90(True,CSOne,0x0000,cs)) #Checksum 1. Needs to be calculated based off the above values.
+	print(hex(comm_atm90(True,CSOne,0x0000,cs))) #Checksum 1. Needs to be calculated based off the above values.
 	
 	
 	#Set measurement calibration values
@@ -130,7 +127,7 @@ def init_atm90(cs):
 	comm_atm90(False,CSTwo,0xD294,cs) #Write CSTwo, as self calculated
 	
 	print("Checksum 2:")
-	print(comm_atm90(True,CSTwo,0x0000,cs))    #Checksum 2. Needs to be calculated based off the above values.
+	print(hex(comm_atm90(True,CSTwo,0x0000,cs)))    #Checksum 2. Needs to be calculated based off the above values.
 	
 	comm_atm90(False,CalStart,0x8765,cs) #Checks correctness of 21-2B registers and starts normal metering if ok
 	comm_atm90(False,AdjStart,0x8765,cs) #Checks correctness of 31-3A registers and starts normal measurement  if ok
@@ -148,6 +145,6 @@ def init_atm90(cs):
 init_atm90(cs2)
 
 while True:
-	val = comm_atm90(True,MMode,0x0000,cs2)
-	print(val)
+	val = GetSysStatus(cs2)
+	print(hex(val))
 	time.sleep_ms(100)
