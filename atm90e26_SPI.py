@@ -140,6 +140,51 @@ def init_atm90(cs):
 	if (systemstatus&0x3000):
 		#checksum 2 error
 		print("Checksum 2 Error!!")
+		
+
+def GetLineVoltage(cs):
+	voltage=comm_atm90(True,Urms,0xFFFF,cs)
+	return voltage/100.0
+
+
+def GetMeterStatus():
+  return comm_atm90(True,EnStatus,0xFFFF)
+
+
+def GetLineCurrent(cs):
+	current=comm_atm90(True,Irms,0xFFFF,cs)
+	return current/1000.0
+
+
+def GetActivePower(cs):
+	apower = comm_atm90(True,Pmean,0xFFFF,cs) #Complement, MSB is signed bit
+	return double(apower)
+
+
+def GetFrequency(cs):
+	freq = comm_atm90(True,Freq,0xFFFF,cs)
+	return freq/100.0
+
+
+def GetPowerFactor(cs):
+	pf = comm_atm90(True,PowerF,0xFFFF,cs) #MSB is signed bit
+	#if negative
+	if(pf&0x8000):
+		pf=(pf&0x7FFF)*-1
+	
+	return pf/1000.0
+
+
+def GetImportEnergy(cs):
+	#Register is cleared after reading
+	ienergy = comm_atm90(True,APenergy,0xFFFF,cs)
+	return ienergy*0.0001 #returns kWh if PL constant set to 1000imp/kWh
+
+
+def GetExportEnergy(cs):
+	#Register is cleared after reading
+	eenergy = comm_atm90(True,ANenergy,0xFFFF,cs)
+	return eenergy*0.0001 #returns kWh if PL constant set to 1000imp/kWh
 	
 
 init_atm90(cs2)
@@ -147,4 +192,6 @@ init_atm90(cs2)
 while True:
 	val = GetSysStatus(cs2)
 	print(hex(val))
+	voltage = GetLineVoltage(cs2)
+	print(voltage)
 	time.sleep_ms(100)
