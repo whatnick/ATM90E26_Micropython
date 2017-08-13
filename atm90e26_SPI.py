@@ -197,11 +197,16 @@ cs2 = machine.Pin(33,machine.Pin.OUT)
 
 spi = machine.SPI(1,baudrate=200000,bits=8,polarity=1,phase=1,firstbit=machine.SPI.MSB,sck=sck,mosi=mosi,miso=miso)
 
-energy_ic = ATM90E26_SPI(spi,cs2)
+all_ics = [ATM90E26_SPI(spi,cs1),ATM90E26_SPI(spi,cs2)]
 
 while True:
-	val = energy_ic.GetSysStatus()
-	print(hex(val))
-	voltage = energy_ic.GetLineVoltage()
-	print(voltage)
-	time.sleep_ms(100)
+	for energy_ic in all_ics:
+		sys_val = energy_ic.GetSysStatus()
+		print("Sys Status:",hex(sys_val))
+		met_val = energy_ic.GetMeterStatus()
+		print("Met Status:",hex(met_val))
+		voltage = energy_ic.GetLineVoltage()
+		print("Voltage:",voltage)
+		current = energy_ic.GetLineCurrent()
+		print("Current:",current)
+	time.sleep_ms(1000)
