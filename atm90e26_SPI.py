@@ -160,7 +160,7 @@ class ATM90E26_SPI:
 
 	def GetActivePower(self):
 		apower = self.comm_atm90(True,Pmean,0xFFFF) #Complement, MSB is signed bit
-		return double(apower)
+		return apower/1.0
 
 
 	def GetFrequency(self):
@@ -188,25 +188,25 @@ class ATM90E26_SPI:
 		eenergy = self.comm_atm90(True,ANenergy,0xFFFF)
 		return eenergy*0.0001 #returns kWh if PL constant set to 1000imp/kWh
 	
+def test_dual_atm90e26():
+	sck = machine.Pin(5,machine.Pin.OUT)
+	mosi = machine.Pin(18,machine.Pin.OUT)
+	miso = machine.Pin(19,machine.Pin.IN)
+	cs1 = machine.Pin(15,machine.Pin.OUT)
+	cs2 = machine.Pin(33,machine.Pin.OUT)
 
-sck = machine.Pin(5,machine.Pin.OUT)
-mosi = machine.Pin(18,machine.Pin.OUT)
-miso = machine.Pin(19,machine.Pin.IN)
-cs1 = machine.Pin(15,machine.Pin.OUT)
-cs2 = machine.Pin(33,machine.Pin.OUT)
+	spi = machine.SPI(1,baudrate=200000,bits=8,polarity=1,phase=1,firstbit=machine.SPI.MSB,sck=sck,mosi=mosi,miso=miso)
 
-spi = machine.SPI(1,baudrate=200000,bits=8,polarity=1,phase=1,firstbit=machine.SPI.MSB,sck=sck,mosi=mosi,miso=miso)
+	all_ics = [ATM90E26_SPI(spi,cs1),ATM90E26_SPI(spi,cs2)]
 
-all_ics = [ATM90E26_SPI(spi,cs1),ATM90E26_SPI(spi,cs2)]
-
-while True:
-	for energy_ic in all_ics:
-		sys_val = energy_ic.GetSysStatus()
-		print("Sys Status:",hex(sys_val))
-		met_val = energy_ic.GetMeterStatus()
-		print("Met Status:",hex(met_val))
-		voltage = energy_ic.GetLineVoltage()
-		print("Voltage:",voltage)
-		current = energy_ic.GetLineCurrent()
-		print("Current:",current)
-	time.sleep_ms(1000)
+	while True:
+		for energy_ic in all_ics:
+			sys_val = energy_ic.GetSysStatus()
+			print("Sys Status:",hex(sys_val))
+			met_val = energy_ic.GetMeterStatus()
+			print("Met Status:",hex(met_val))
+			voltage = energy_ic.GetLineVoltage()
+			print("Voltage:",voltage)
+			current = energy_ic.GetLineCurrent()
+			print("Current:",current)
+		time.sleep_ms(1000)
